@@ -29,6 +29,11 @@
             display: flex;
             flex-direction: column;
             position: relative;
+            /* Desktop/Tablet Fix: Increase max-width and min-height for larger screens */
+            @media (min-width: 640px) {
+                max-width: 500px; /* Slightly wider on desktop */
+                min-height: 80vh; 
+            }
         }
         .screen {
             display: none;
@@ -119,7 +124,6 @@
         <h2 class="text-xl font-bold mb-4 text-center">Find Your State of Coherence</h2>
         <p class="text-center text-sm mb-6 text-gray-400">Your environment shapes your inner state. Select the foundational goal for today's acoustic analysis:</p>
         <div id="goal-buttons" class="space-y-4 mb-8">
-            <!-- IMPORTANT: These onclick handlers will work now because the functions are defined immediately at the end of the body -->
             <button onclick="setGoal('Restorative Sleep')" class="button-base goal-button w-full" data-goal="Restorative Sleep">Restorative Sleep</button>
             <button onclick="setGoal('Deep Focus')" class="button-base goal-button w-full" data-goal="Deep Focus">Deep Focus</button>
             <button onclick="setGoal('Natural Calm')" class="button-base goal-button w-full" data-goal="Natural Calm">Natural Calm</button>
@@ -188,8 +192,9 @@
 
         <p class="text-center text-xl font-bold mb-6 text-green-400">$7.99 / Month</p>
 
-        <button onclick="subscribe()" class="button-base primary-button w-full mb-4">Subscribe Now</button>
-        <button onclick="closePaywallAndReset()" class="button-base w-full text-sm text-gray-400 hover:text-white">No, I'll stick with the stress.</button>
+        <button onclick="subscribe()" class="button-base primary-button w-full mb-4">Subscribe Now (Simulated)</button>
+        <!-- Updated to Free Demo button -->
+        <button onclick="showSimulatedFixDemo()" class="button-base w-full text-sm text-gray-400 hover:text-white">Free Engine Demo</button>
     </div>
 
     <div id="screen-reports" class="screen">
@@ -353,7 +358,7 @@
         }
     }
 
-    function setGoal(goal) {
+    window.setGoal = (goal) => {
         selectedGoal = goal;
         document.querySelectorAll('.goal-button').forEach(btn => {
             btn.classList.remove('selected');
@@ -479,11 +484,14 @@
     }
 
     function subscribe() {
-        showCustomAlert("Thank you for subscribing! Your Adaptive Resonance Engine is now active.");
-        closePaywallAndReset();
+        // --- Simulated Subscription Success ---
+        showCustomAlert("Thank you for subscribing! Your Adaptive Resonance Engine is now active. (Payment simulated)");
+        // After "subscribing," trigger the fix demo and reset the app.
+        showSimulatedFixDemo();
     }
 
-    function closePaywallAndReset() {
+    // Renamed and adjusted logic
+    function closePaywallAndReset() { 
         showSimulatedFixDemo();
     }
 
@@ -491,7 +499,7 @@
         const modal = document.getElementById('simulated-fix-modal');
         
         showScreen('scanning');
-        document.getElementById('scanning-status').textContent = "Adaptive Resonance Engine: Frequency Neutralization Active.";
+        document.getElementById('scanning-status').textContent = "Adaptive Resonance Engine: Frequency Neutralization Active. (Simulated)";
         modal.classList.remove('hidden');
 
         document.querySelectorAll('.scan-bar').forEach(bar => {
@@ -526,6 +534,7 @@
             return;
         }
         
+        // This is necessary to resume audio context after a user interaction
         Tone.start().then(async () => {
             btn.textContent = 'Generating Coherence Frequency...';
             btn.disabled = true;
