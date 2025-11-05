@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -118,11 +119,12 @@
         <h2 class="text-xl font-bold mb-4 text-center">Find Your State of Coherence</h2>
         <p class="text-center text-sm mb-6 text-gray-400">Your environment shapes your inner state. Select the foundational goal for today's acoustic analysis:</p>
         <div id="goal-buttons" class="space-y-4 mb-8">
-            <button onclick="window.setGoal('Restorative Sleep')" class="button-base goal-button w-full" data-goal="Restorative Sleep">Restorative Sleep</button>
-            <button onclick="window.setGoal('Deep Focus')" class="button-base goal-button w-full" data-goal="Deep Focus">Deep Focus</button>
-            <button onclick="window.setGoal('Natural Calm')" class="button-base goal-button w-full" data-goal="Natural Calm">Natural Calm</button>
+            <!-- IMPORTANT: These onclick handlers will work now because the functions are defined immediately at the end of the body -->
+            <button onclick="setGoal('Restorative Sleep')" class="button-base goal-button w-full" data-goal="Restorative Sleep">Restorative Sleep</button>
+            <button onclick="setGoal('Deep Focus')" class="button-base goal-button w-full" data-goal="Deep Focus">Deep Focus</button>
+            <button onclick="setGoal('Natural Calm')" class="button-base goal-button w-full" data-goal="Natural Calm">Natural Calm</button>
         </div>
-        <button onclick="window.showScreen('reports')" class="button-base w-full text-sm text-gray-400 hover:text-white mt-auto">View Acoustic Health Reports</button>
+        <button onclick="showScreen('reports')" class="button-base w-full text-sm text-gray-400 hover:text-white mt-auto">View Acoustic Health Reports</button>
     </div>
 
     <div id="screen-scanning" class="screen">
@@ -159,15 +161,15 @@
             <p id="goal-summary"></p>
         </div>
 
-        <button onclick="window.shareScore()" class="button-base primary-button w-full mb-4 bg-purple-600 hover:bg-purple-700">
+        <button onclick="shareScore()" class="button-base primary-button w-full mb-4 bg-purple-600 hover:bg-purple-700">
             Share My Coherence State
         </button>
 
-        <button onclick="window.playBinauralDemo()" id="binaural-demo-button" class="button-base w-full bg-indigo-600 hover:bg-indigo-700 text-white mb-4">
+        <button onclick="playBinauralDemo()" id="binaural-demo-button" class="button-base w-full bg-indigo-600 hover:bg-indigo-700 text-white mb-4">
             Experience Coherence State (Free Demo)
         </button>
 
-        <button onclick="window.showPaywall()" class="button-base primary-button w-full mt-2">
+        <button onclick="showPaywall()" class="button-base primary-button w-full mt-2">
             Restore Your Natural Cohesion (Unlock Engine)
         </button>
     </div>
@@ -186,8 +188,8 @@
 
         <p class="text-center text-xl font-bold mb-6 text-green-400">$7.99 / Month</p>
 
-        <button onclick="window.subscribe()" class="button-base primary-button w-full mb-4">Subscribe Now</button>
-        <button onclick="window.closePaywallAndReset()" class="button-base w-full text-sm text-gray-400 hover:text-white">No, I'll stick with the stress.</button>
+        <button onclick="subscribe()" class="button-base primary-button w-full mb-4">Subscribe Now</button>
+        <button onclick="closePaywallAndReset()" class="button-base w-full text-sm text-gray-400 hover:text-white">No, I'll stick with the stress.</button>
     </div>
 
     <div id="screen-reports" class="screen">
@@ -195,7 +197,7 @@
         <div id="reports-list" class="space-y-4 overflow-y-auto flex-grow mb-6">
             <p class="text-center text-gray-500">Loading reports...</p>
         </div>
-        <button onclick="window.showScreen('goal-selection')" class="button-base w-full text-sm text-gray-400 hover:text-white mt-auto">← Back to Goals</button>
+        <button onclick="showScreen('goal-selection')" class="button-base w-full text-sm text-gray-400 hover:text-white mt-auto">← Back to Goals</button>
     </div>
 
     <!-- Simulated Demo Modal -->
@@ -209,12 +211,13 @@
 </div>
 
 <script type="module">
+    // --- Firebase Imports and Initialization ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, addDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // IMPORTANT: THIS IS YOUR SECURE PRODUCTION CONFIGURATION
+    // IMPORTANT: YOUR SECURE PRODUCTION CONFIGURATION (API Key is here)
     const firebaseConfig = {
       apiKey: "AIzaSyQCWdCqHjyzoDqHf7NSTLa_N1AQxzQW2Y",
       authDomain: "resonance-ai-prod-44a3d.firebaseapp.com",
@@ -224,9 +227,8 @@
       appId: "1:102779965339:web:f6436540059b23ae96bb3e",
       measurementId: "G-NVNT72Z3XT"
     };
-    const APP_ID = "resonance-ai-prod-44a3d"; // Using projectId as the unique app identifier
+    const APP_ID = "resonance-ai-prod-44a3d";
 
-    // Initialize Firebase and Global Variables
     setLogLevel('debug');
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -234,25 +236,11 @@
     let currentUserId = null;
     let isAuthReady = false;
 
-    // Sign in Anonymously to establish a user session
-    signInAnonymously(auth)
-        .then((userCredential) => {
-            currentUserId = userCredential.user.uid;
-            isAuthReady = true;
-            console.log("Firebase initialized. User ID:", currentUserId);
-            // After auth is ready, try loading reports (if on the reports screen)
-            if (document.getElementById('screen-reports').classList.contains('active')) {
-                window.loadReports();
-            }
-        })
-        .catch((error) => {
-            console.error("Firebase Auth Error:", error);
-            // If anonymous sign-in fails, use a random ID for simulation purposes
-            currentUserId = crypto.randomUUID();
-            isAuthReady = true;
-        });
+    // --- Core Functions Exposed Globally ---
+    
+    // We define functions inside the module script and attach them to the global window object.
+    // This allows the HTML 'onclick' attributes to find them.
 
-    // Expose Firebase functions to the global window object for use in the HTML and main script
     window.saveReport = async (score, goal, diagnosis, disruptingFrequency) => {
         if (!isAuthReady || !currentUserId) {
             console.error("Auth not ready. Cannot save report.");
@@ -278,16 +266,15 @@
         reportsList.innerHTML = '<p class="text-center text-gray-500">Loading reports...</p>';
 
         if (!isAuthReady || !currentUserId) {
-            reportsList.innerHTML = '<p class="text-center text-red-400">User not authenticated. Please try refreshing.</p>';
+            reportsList.innerHTML = '<p class="text-center text-red-400">User not authenticated. Please wait for Firebase sign-in.</p>';
             return;
         }
 
         try {
             const reportsCollectionRef = collection(db, `artifacts/${APP_ID}/users/${currentUserId}/acoustic_reports`);
-            // Note: Firestore recommends sorting after fetch to avoid index errors in this sandbox env.
-            const q = query(reportsCollectionRef);
-
-            onSnapshot(q, (snapshot) => {
+            
+            // Listen for real-time updates (onSnapshot)
+            onSnapshot(reportsCollectionRef, (snapshot) => {
                 const reports = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
@@ -324,31 +311,49 @@
             reportsList.innerHTML = '<p class="text-center text-red-400">Database setup failed. Check console.</p>';
         }
     };
+
+    // --- Firebase Auth Initialization ---
+    signInAnonymously(auth)
+        .then((userCredential) => {
+            currentUserId = userCredential.user.uid;
+            isAuthReady = true;
+            console.log("Firebase initialized. User ID:", currentUserId);
+        })
+        .catch((error) => {
+            console.error("Firebase Auth Error:", error);
+            // If anonymous sign-in fails, use a random ID for simulation purposes
+            currentUserId = crypto.randomUUID();
+            isAuthReady = true;
+        });
+
 </script>
+
+<!-- The second script block contains the main game/UI logic, now using simple function calls -->
 <script>
-    let currentScreen = 'goal-selection';
     let selectedGoal = null;
     let stressScore = 0;
-    let disruptingFrequency = ''; // Stored as a string like '120Hz'
+    let disruptingFrequency = '';
     let diagnosisMessage = '';
     let binauralSynth = null;
+    let scanInterval;
 
-    window.showScreen = (screenId) => {
+    // --- UI/Screen Functions ---
+
+    function showScreen(screenId) {
         document.querySelectorAll('.screen').forEach(screen => {
             screen.classList.remove('active');
         });
         document.getElementById(`screen-${screenId}`).classList.add('active');
-        currentScreen = screenId;
 
-        if (screenId === 'reports') {
+        if (screenId === 'reports' && window.loadReports) {
             window.loadReports();
         }
         if (screenId !== 'results' && binauralSynth) {
-            window.stopBinauralDemo();
+            stopBinauralDemo();
         }
-    };
+    }
 
-    window.setGoal = (goal) => {
+    function setGoal(goal) {
         selectedGoal = goal;
         document.querySelectorAll('.goal-button').forEach(btn => {
             btn.classList.remove('selected');
@@ -356,14 +361,12 @@
                 btn.classList.add('selected');
             }
         });
+        startScan();
+    }
 
-        // Start the scan immediately after setting the goal
-        window.startScan();
-    };
-
-    window.startScan = () => {
+    function startScan() {
         if (!selectedGoal) return;
-        window.showScreen('scanning');
+        showScreen('scanning');
         const statusElement = document.getElementById('scanning-status');
 
         const statusUpdates = [
@@ -375,48 +378,45 @@
         ];
         let updateIndex = 0;
 
-        const scanInterval = setInterval(() => {
+        // Clear any existing interval just in case
+        if (scanInterval) clearInterval(scanInterval);
+
+        scanInterval = setInterval(() => {
             if (updateIndex < statusUpdates.length) {
                 statusElement.textContent = statusUpdates[updateIndex];
                 updateIndex++;
             } else {
                 clearInterval(scanInterval);
-                setTimeout(window.showResults, 1000); // 1 second delay after final update
+                setTimeout(showResults, 1000);
             }
         }, 1000);
-    };
+    }
 
-    window.showResults = () => {
+    function showResults() {
         // --- 1. DSP Simulation & Diagnosis ---
         stressScore = Math.floor(Math.random() * (95 - 65 + 1)) + 65; // High score range: 65-95
-        const lowHz = Math.floor(Math.random() * (20 - 5 + 1)) + 5; // A disruptive low frequency (e.g., HVAC hum)
-        const highHz = Math.floor(Math.random() * (200 - 100 + 1)) + 100; // A disruptive mid frequency (e.g., traffic drone)
+        const lowHz = Math.floor(Math.random() * (20 - 5 + 1)) + 5; 
+        const highHz = Math.floor(Math.random() * (200 - 100 + 1)) + 100;
 
-        // Determine the single most disruptive frequency for the personalized correction
         disruptingFrequency = `${stressScore % 2 === 0 ? lowHz : highHz}Hz`;
 
-        // Generate Diagnosis Copy based on goal
         let goalSummary = '';
-        let frequencyText = '';
-        let toneFrequency = 0; // For binaural demo
+        let toneFrequency = 0; 
 
         switch (selectedGoal) {
             case 'Restorative Sleep':
                 diagnosisMessage = 'Disrupted Delta Wave Cohesion.';
-                frequencyText = `The ${disruptingFrequency} frequency spike is actively preventing your brain from reaching a deep, restorative Delta state.`;
-                toneFrequency = 2 + (stressScore % 3); // 2-5Hz Delta Wave target
+                toneFrequency = 2 + (stressScore % 3); 
                 goalSummary = `Resulting in fragmented sleep cycles and chronic daytime fatigue.`;
                 break;
             case 'Deep Focus':
                 diagnosisMessage = 'High Beta Wave Interference Detected.';
-                frequencyText = `The ${disruptingFrequency} frequency spike is overloading your cognitive processes, leading to mental noise and focus decay.`;
-                toneFrequency = 15 + (stressScore % 5); // 15-20Hz Beta Wave target
+                toneFrequency = 15 + (stressScore % 5);
                 goalSummary = `Resulting in productivity loss and difficulty sustaining attention.`;
                 break;
             case 'Natural Calm':
                 diagnosisMessage = 'Exaggerated Gamma/Theta Dissonance.';
-                frequencyText = `The ${disruptingFrequency} frequency spike is creating excessive internal friction, inhibiting your ability to relax naturally.`;
-                toneFrequency = 7 + (stressScore % 3); // 7-10Hz Alpha/Theta Wave target
+                toneFrequency = 7 + (stressScore % 3); 
                 goalSummary = `Resulting in persistent restlessness and elevated internal stress.`;
                 break;
         }
@@ -436,7 +436,6 @@
         fillCircle.style.strokeDasharray = `${circumference} ${circumference}`;
         fillCircle.style.strokeDashoffset = dashoffset;
         
-        // Set color dynamically
         if (stressScore > 80) {
             fillCircle.style.stroke = '#f87171'; // Red
         } else if (stressScore > 70) {
@@ -445,16 +444,19 @@
             fillCircle.style.stroke = '#4ade80'; // Green
         }
 
-        // --- 4. Save to Firestore ---
-        window.saveReport(stressScore, selectedGoal, diagnosisMessage, disruptingFrequency);
+        // --- 4. Save to Firestore (uses the globally exposed function) ---
+        if (window.saveReport) {
+            window.saveReport(stressScore, selectedGoal, diagnosisMessage, disruptingFrequency);
+        } else {
+            console.error("window.saveReport is not yet available.");
+        }
 
-        window.showScreen('results');
-    };
+        showScreen('results');
+    }
 
-    window.shareScore = () => {
+    function shareScore() {
         const message = `🚨 My Resonance AI Scan showed a ${stressScore}/100 Environmental Stress Score due to ${disruptingFrequency} interference. I need to Restore My Natural Cohesion with the Adaptive Resonance Engine! #ResonanceAI #AcousticWellness`;
         
-        // Use execCommand('copy') for better compatibility in sandbox environments
         const tempInput = document.createElement('textarea');
         tempInput.value = message;
         document.body.appendChild(tempInput);
@@ -462,121 +464,115 @@
         
         try {
             document.execCommand('copy');
-            alert("Score copied to clipboard! Share the dissonance.");
+            // Use a custom UI alert instead of native alert()
+            showCustomAlert("Score copied to clipboard! Share the dissonance.");
         } catch (err) {
             console.error('Could not copy text: ', err);
-            alert("Could not copy. Please manually copy this text:\n" + message);
+            showCustomAlert("Could not copy. Please manually copy this text:\n" + message);
         }
         document.body.removeChild(tempInput);
-    };
+    }
 
-    window.showPaywall = () => {
-        window.stopBinauralDemo();
-        window.showScreen('paywall');
-    };
+    function showPaywall() {
+        stopBinauralDemo();
+        showScreen('paywall');
+    }
 
-    window.subscribe = () => {
-        alert("Thank you for subscribing! Your Adaptive Resonance Engine is now active.");
-        window.closePaywallAndReset();
-    };
+    function subscribe() {
+        showCustomAlert("Thank you for subscribing! Your Adaptive Resonance Engine is now active.");
+        closePaywallAndReset();
+    }
 
-    window.closePaywallAndReset = () => {
-        // Option 1: Simulated Fix Demo (This is the high-friction feature)
-        window.showSimulatedFixDemo();
-    };
+    function closePaywallAndReset() {
+        showSimulatedFixDemo();
+    }
 
-    window.showSimulatedFixDemo = () => {
+    function showSimulatedFixDemo() {
         const modal = document.getElementById('simulated-fix-modal');
-        const scanVisual = document.querySelector('#screen-scanning .scan-visual');
         
-        // 1. Show scanning screen temporarily
-        window.showScreen('scanning');
+        showScreen('scanning');
         document.getElementById('scanning-status').textContent = "Adaptive Resonance Engine: Frequency Neutralization Active.";
         modal.classList.remove('hidden');
 
-        // 2. Change Visual to demonstrate 'fix' (Green and Calmer)
         document.querySelectorAll('.scan-bar').forEach(bar => {
-            bar.style.backgroundColor = '#10b981'; // Tailwind Green-500
-            bar.style.animationDuration = '2.5s'; // Slower pulse
+            bar.style.backgroundColor = '#10b981'; 
+            bar.style.animationDuration = '2.5s'; 
         });
 
-        // 3. Reset after a few seconds
         setTimeout(() => {
             modal.classList.add('hidden');
             
-            // Reset bar styles for next scan (back to blue/purple)
             document.querySelectorAll('.scan-bar').forEach(bar => {
-                bar.style.backgroundColor = ''; // Reverts to CSS default
+                bar.style.backgroundColor = ''; 
                 bar.style.animationDuration = ''; 
             });
             
-            // Go back to the initial goal screen
-            window.resetApp();
+            resetApp();
         }, 3000);
-    };
+    }
 
-    window.resetApp = () => {
+    function resetApp() {
         selectedGoal = null;
         stressScore = 0;
         document.querySelectorAll('.goal-button').forEach(btn => btn.classList.remove('selected'));
-        window.showScreen('goal-selection');
-    };
- // Start audio context if needed
-        await Tone.start();
-        btn.textContent = 'Generating Coherence Frequency...';
-        btn.disabled = true;
+        showScreen('goal-selection');
+    }
 
-        const baseFrequency = 440; // Base carrier frequency for stability
+    // --- Binaural Audio Logic ---
+    function playBinauralDemo() {
+        const btn = document.getElementById('binaural-demo-button');
+        if (binauralSynth) {
+            stopBinauralDemo();
+            return;
+        }
         
-        // Determine the corrective frequency based on the diagnosis
-        let baseTone = 0;
-        let beatFrequency = 0;
+        Tone.start().then(async () => {
+            btn.textContent = 'Generating Coherence Frequency...';
+            btn.disabled = true;
 
-        const freqValue = parseFloat(disruptingFrequency.replace('Hz', ''));
+            let baseTone = 0;
+            let beatFrequency = 0;
 
-        // The correction is designed to harmonize the identified stress frequency (freqValue)
-        // We use a small, therapeutic delta (e.g., 4-10Hz difference)
-        if (selectedGoal === 'Restorative Sleep') {
-            // Sleep: Focus on very low Delta waves (1-4 Hz difference)
-            beatFrequency = 2; // Delta wave
-            baseTone = 100 + freqValue;
-        } else if (selectedGoal === 'Deep Focus') {
-            // Focus: Focus on mid-range Beta waves (14-30 Hz difference)
-            beatFrequency = 18; // High Beta wave
-            baseTone = 200 + freqValue; 
-        } else {
-            // Calm: Focus on mid-range Alpha/Theta waves (7-13 Hz difference)
-            beatFrequency = 8; // Alpha wave
-            baseTone = 150 + freqValue;
-        }
+            const freqValue = parseFloat(disruptingFrequency.replace('Hz', '')) || 100; // Fallback to 100Hz
 
-        const freq1 = baseTone + beatFrequency / 2;
-        const freq2 = baseTone - beatFrequency / 2;
+            if (selectedGoal === 'Restorative Sleep') {
+                beatFrequency = 2; // Delta wave
+                baseTone = 100 + freqValue;
+            } else if (selectedGoal === 'Deep Focus') {
+                beatFrequency = 18; // High Beta wave
+                baseTone = 200 + freqValue; 
+            } else {
+                beatFrequency = 8; // Alpha wave
+                baseTone = 150 + freqValue;
+            }
 
-        try {
-            // Create two slightly detuned oscillators for the binaural effect
-            binauralSynth = new Tone.PolySynth(Tone.AMSynth, {
-                volume: -10,
-                oscillator: { type: "sine" },
-                envelope: { attack: 0.5, decay: 0.1, sustain: 1, release: 2 }
-            }).toDestination();
+            const freq1 = baseTone + beatFrequency / 2;
+            const freq2 = baseTone - beatFrequency / 2;
 
-            binauralSynth.triggerAttack([freq1, freq2]);
+            try {
+                binauralSynth = new Tone.PolySynth(Tone.AMSynth, {
+                    volume: -10,
+                    oscillator: { type: "sine" },
+                    envelope: { attack: 0.5, decay: 0.1, sustain: 1, release: 2 }
+                }).toDestination();
 
-            btn.textContent = 'Stop Coherence Frequency';
-            btn.classList.remove('bg-indigo-600');
-            btn.classList.add('bg-red-500');
-            btn.disabled = false;
+                binauralSynth.triggerAttack([freq1, freq2]);
 
-        } catch (error) {
-            console.error("Tone.js Audio Error:", error);
-            alert("Could not start audio demo. Check console for details.");
-            btn.textContent = 'Audio Failed';
-            btn.disabled = false;
-        }
-    };
+                btn.textContent = 'Stop Coherence Frequency';
+                btn.classList.remove('bg-indigo-600');
+                btn.classList.add('bg-red-500');
+                btn.disabled = false;
 
-    window.stopBinauralDemo = () => {
+            } catch (error) {
+                console.error("Tone.js Audio Error:", error);
+                showCustomAlert("Could not start audio demo. Check console for details.");
+                btn.textContent = 'Audio Failed';
+                btn.disabled = false;
+            }
+        });
+    }
+
+    function stopBinauralDemo() {
         if (binauralSynth) {
             binauralSynth.releaseAll();
             binauralSynth = null;
@@ -586,7 +582,21 @@
         btn.classList.add('bg-indigo-600');
         btn.classList.remove('bg-red-500');
         btn.disabled = false;
-    };
+    }
+
+    // --- Custom Alert/Modal Replacement ---
+    function showCustomAlert(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-[9999]';
+        alertDiv.innerHTML = `
+            <div class="bg-gray-900 p-6 rounded-xl shadow-2xl text-center border-2 border-indigo-500 max-w-xs">
+                <p class="text-white mb-4">${message}</p>
+                <button class="button-base primary-button w-full" onclick="this.closest('.fixed').remove()">OK</button>
+            </div>
+        `;
+        document.body.appendChild(alertDiv);
+    }
 </script>
+
 </body>
 </html>
